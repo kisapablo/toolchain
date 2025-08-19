@@ -160,7 +160,6 @@ call plug#end()
 
 "Plugin configuration
 "source $HOME/.config/nvim/themes/darcula.vim
-"colorscheme darcula-solid-idea
 set termguicolors
 highlight rustLifetime guifg=#20999d
 lua << EOF
@@ -816,6 +815,76 @@ vim.keymap.set('n', 'cvx', ':SessionSearch<CR>', {})
 --     scrolling = true,         -- Enable scrolling keymaps (<C-f/b>) for page up/down
 --   }
 -- })
+
+local function check_and_install_ls_emmet()
+  -- Get g:plug_home (default: ~/.local/share/nvim/plugged for Neovim)
+  local plug_home = vim.g.plug_home or vim.fn.stdpath('data') .. '/plugged'
+  local ls_emmet_dir = plug_home .. '/ls_emmet'
+  local ls_emmet_bin = ls_emmet_dir .. '/node_modules/.bin/ls_emmet'
+
+  -- Check if ls_emmet binary exists
+  if vim.fn.executable(ls_emmet_bin) == 0 then
+    print("ls_emmet not found, installing in " .. ls_emmet_dir .. "...")
+    -- Create directory if it doesn't exist
+    vim.fn.mkdir(ls_emmet_dir, "p")
+    -- Run npm install in the ls_emmet directory
+    local result = vim.fn.system({"npm", "install", "ls_emmet", "--prefix", ls_emmet_dir})
+    if vim.v.shell_error == 0 then
+      print("ls_emmet installed successfully in " .. ls_emmet_dir)
+    else
+      vim.api.nvim_err_writeln("Failed to install ls_emmet. Error: " .. result ..
+        "\nPlease run 'npm install ls_emmet --prefix " .. ls_emmet_dir .. "' manually.")
+    end
+  end
+
+  return ls_emmet_bin
+end
+
+-- Run the check on Neovim startup
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    check_and_install_ls_emmet()
+  end,
+})
+
+
+local lspconfig = require'lspconfig'
+local configs = require'lspconfig.configs'
+
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+if not configs.ls_emmet then
+  configs.ls_emmet = {
+    default_config = {
+      cmd = { check_and_install_ls_emmet(), '--stdio' };
+      filetypes = {
+        'html',
+        'css',
+        'scss',
+        'javascriptreact',
+        'typescriptreact',
+        'haml',
+        'xml',
+        'xsl',
+        'pug',
+        'slim',
+        'sass',
+        'stylus',
+        'less',
+        'sss',
+        'hbs',
+        'handlebars',
+      };
+      root_dir = function(fname)
+        return vim.loop.cwd()
+      end;
+      settings = {};
+    };
+  }
+end
+
+lspconfig.ls_emmet.setup { capabilities = capabilities }
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })

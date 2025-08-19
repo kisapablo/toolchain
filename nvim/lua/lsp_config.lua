@@ -4,7 +4,7 @@ local lspconfig = require('lspconfig')
 
 require 'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all"
-  ensure_installed = { "c", "cpp", "lua", "rust", "java", "toml", "html" },
+  ensure_installed = { "c", "cpp", "lua", "rust", "java", "toml" },
 
   -- Install parsers synchronously (only applied to `ensure_installed`)
   sync_install = false,
@@ -12,6 +12,7 @@ require 'nvim-treesitter.configs'.setup {
   -- Automatically install missing parsers when entering buffer
   -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
   auto_install = true,
+  -- ignore_install = { "html", "xml"},
 
   highlight = {
     -- `false` will disable the whole extension
@@ -29,14 +30,15 @@ require 'nvim-treesitter.configs'.setup {
     enable = true,
   },
 
-  autotag = {
-    enable = true,
-    enable_rename = true,
-    enable_close = true,
-    enable_close_on_slash = true,
-    filetypes = { "html", "xml" },
-  }
+  -- autotag = {
+  --   enable = true,
+  --   -- enable_rename = true,
+  --   -- enable_close = true,
+  --   -- enable_close_on_slash = true,
+  --   -- filetypes = { "xml", "html" },
+  -- }
 }
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'sh',
   callback = function()
@@ -57,7 +59,7 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls" }
+  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls" }
 }
 
 function docker_fix()
@@ -73,13 +75,13 @@ vim.cmd [[au BufRead * lua docker_fix()]]
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
-  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls' 
+  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls', 'intelephense', 'sqlls',
+  'html', 'cssls'
 }
 
 local is_first_delete = true
 
 local function on_attach(client, buffer)
-
   -- Example usage
   if is_first_delete then
     vim.keymap.del('n', '.', { buffer = nil })
@@ -144,6 +146,7 @@ for _, lsp in ipairs(servers) do
     }
   end
 end
+
 local opts         = {
   tools = {
     inlay_hints = {
@@ -204,62 +207,6 @@ local opts         = {
 
 vim.g.rustaceanvim = opts;
 
--- local new_opts     = {
---   tools = {
---     inlay_hints = {
---       auto = true,
---       show_parameter_hints = true,
---       parameter_hints_prefix = "",
---       other_hints_prefix = "",
---     },
---   },
---   -- LSP configuration
---   server = {
---     on_attach = on_attach,
---     default_settings = {
---       -- rust-analyzer language server configuration
---       ['rust-analyzer'] = {
---         -- enable clippy on save
---         checkOnSave = {
---           command = "clippy",
---         },
---         cargo = {
---           buildScripts = {
---             enable = true,
---           },
---           unsetTest = true,
---         },
---         workspace = {
---           symbol = {
---             search = {
---               limit = 512
---             }
---           }
---         },
---         lru = {
---           capacity = 512
---         },
---
---         procMacro = {
---           enable = true,
---           ignored = { "tokio::select", "o2o" }
---         },
---
---         diagnostics = {
---           experimental = {
---             enable = true
---           },
---
---           disabled = { "unresolved-proc-macro" },
---         },
---       },
---     },
---   },
--- }
-
--- vim.g.rustaceanvim = new_opts
-
--- require("rust-tools").setup(opts)
 -- luasnip setup
 local luasnip      = require 'luasnip'
 -- nvim-cmp setup
@@ -341,10 +288,3 @@ null_ls.setup({
     end
   end,
 })
-
--- vim.keymap.set(
---   "n",
---   "<M>-1",
---   require("rustowl").rustowl_cursor,
---   { noremap = true, silent = true }
--- )
