@@ -5,6 +5,11 @@ local darcula_solid = require('lush_theme.darcula-solid')
 local spec = lush.extends({darcula_solid}).with(function(injected_functions)
 local sym = injected_functions.sym
 local keyword_color = "#E37F4E";
+
+local colors = {
+  gray = lush.hsl(220, 10, 50), 
+}
+
   return {
     Constant { fg = lush.hsl("#c77dbb") },
     RustLifetime { fg = lush.hsl("#20999d")},
@@ -19,6 +24,7 @@ local keyword_color = "#E37F4E";
     Module { fg = lush.hsl("#c4c1bc") },
     String { fg = lush.hsl("#5BA130") },
     Label { fg = lush.hsl("#20999D") },
+    LspInlayHint { fg = colors.gray },
   }
 end)
 lush(spec)

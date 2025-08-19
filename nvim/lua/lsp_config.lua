@@ -50,7 +50,6 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "go",
   callback = function()
-
     vim.keymap.set("n", "cvt", ":GoCoverage<CR>", { buffer = true })
   end,
 })
@@ -74,7 +73,7 @@ vim.cmd [[au BufRead * lua docker_fix()]]
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
-  'omnisharp', 'vhdl_ls', 'angularls', "yamlls", "taplo", "buf_ls", "digestif", "gopls"
+  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls' 
 }
 
 local is_first_delete = true

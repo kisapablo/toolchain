@@ -21,6 +21,12 @@ nmap <silent> <C-F9> :RustRun<CR>
 
 call plug#begin()
 
+Plug 'f-person/auto-dark-mode.nvim'
+" Plug 'ravibrock/spellwarn.nvim'
+
+Plug 'nvim-lua/plenary.nvim'
+Plug 'ckipp01/nvim-jenkinsfile-linter'
+
 Plug 'emakman/nvim-latex-previewer'
 
 Plug 'aveplen/ruscmd.nvim'
@@ -161,8 +167,47 @@ lua << EOF
 require('go').setup()
 
 local vim = vim
-    
 
+require('auto-dark-mode').setup({
+set_dark_mode = function()
+    vim.cmd("colorscheme darcula-solid-idea")
+    end,
+set_light_mode = function()
+    vim.cmd("colorscheme zellner")
+end,
+update_interval = 3000,
+fallback = "dark"
+})
+-- require("spellwarn").setup({
+--     event = { -- event(s) to refresh diagnostics on
+--         "CursorHold",
+--         "InsertLeave",
+--         "TextChanged",
+--         "TextChangedI",
+--         "TextChangedP",
+--     },
+--     enable = true, -- enable diagnostics on startup
+--     ft_config = { -- spellcheck method: "cursor", "iter", or boolean
+--         alpha   = false,
+--         help    = false,
+--         lazy    = false,
+--         lspinfo = false,
+--         mason   = false,
+--     },
+--     ft_default = true, -- default option for unspecified filetypes
+--     max_file_size = nil, -- maximum file size to check in lines (nil for no limit)
+--     severity = { -- severity for each spelling error type (false to disable diagnostics for that type)
+--         spellbad   = "WARN",
+--         spellcap   = "HINT",
+--         spelllocal = "HINT",
+--         spellrare  = "INFO",
+--     },
+--     prefix = "possible misspelling(s): ", -- prefix for each diagnostic message
+--     diagnostic_opts = { severity_sort = true }, -- options for diagnostic display
+-- })
+-- vim.opt.spell = true
+-- vim.opt.spelllang = {'en_us', 'en_gb', 'ru'}
+    
 vim.cmd("colorscheme darcula-solid-idea")
 
 ts_context = require'treesitter-context'
@@ -256,17 +301,6 @@ require('mason').setup({
         }
     }
 })
---local monokai = require('monokai')
---local palette = monokai.pro
---monokai.setup {
---      palette = palette,
---      custom_hlgroups = {
---         comment = {
---             fg = '#7cc22d',
---             }
---      Comment = 
---     },
---}
 
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
@@ -536,6 +570,32 @@ vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
 
 vim.g.copilot_no_tab_map = true
 
+local function disable_copilot_without_vpn(service_name)
+  -- Run systemctl to check service status
+  local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
+  if not handle then
+    return
+  end
+
+  local result = handle:read("*a")
+  handle:close()
+
+  -- Trim whitespace from result
+  result = result:gsub("%s+", "")
+
+  if result == "inactive" then
+    vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
+    vim.cmd('Copilot disable')
+  end
+end
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    disable_copilot_without_vpn('wg-quick@wg0.service')
+  end,
+  desc = "Check systemd service status on Neovim startup",
+})
+
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
 vim.g.db_ui_show_database_icon = 1
@@ -665,8 +725,7 @@ require('auto-session').setup({
     },
 })
 
-vim.keymap.set('n', 'cvx', ':Autosession search<CR>', {})
-
+vim.keymap.set('n', 'cvx', ':SessionSearch<CR>', {})
 
 -- require("codecompanion").setup({
 --     adapters = {
