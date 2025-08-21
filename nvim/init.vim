@@ -54,7 +54,7 @@ Plug 'windwp/nvim-autopairs'
 
 Plug 'nvim-lua/plenary.nvim'
 
-Plug 'github/copilot.vim'
+" Plug 'github/copilot.vim'
 
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
 Plug 'rmagatti/auto-session', { 'tag' : 'v2.5.1' }
@@ -562,38 +562,38 @@ require('crates').setup {
 }
 
 --
-vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
-  expr = true,
-  replace_keycodes = false
-})
+-- vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
+--   expr = true,
+--   replace_keycodes = false
+-- })
+--
+-- vim.g.copilot_no_tab_map = true
 
-vim.g.copilot_no_tab_map = true
-
-local function disable_copilot_without_vpn(service_name)
-  -- Run systemctl to check service status
-  local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
-  if not handle then
-    return
-  end
-
-  local result = handle:read("*a")
-  handle:close()
-
-  -- Trim whitespace from result
-  result = result:gsub("%s+", "")
-
-  if result == "inactive" then
-    vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
-    vim.cmd('Copilot disable')
-  end
-end
-
-vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    disable_copilot_without_vpn('wg-quick@wg0.service')
-  end,
-  desc = "Check systemd service status on Neovim startup",
-})
+-- local function disable_copilot_without_vpn(service_name)
+--   -- Run systemctl to check service status
+--   local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
+--   if not handle then
+--     return
+--   end
+--
+--   local result = handle:read("*a")
+--   handle:close()
+--
+--   -- Trim whitespace from result
+--   result = result:gsub("%s+", "")
+--
+--   if result == "inactive" then
+--     vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
+--     vim.cmd('Copilot disable')
+--   end
+-- end
+--
+-- vim.api.nvim_create_autocmd("VimEnter", {
+--   callback = function()
+--     disable_copilot_without_vpn('wg-quick@wg0.service')
+--   end,
+--   desc = "Check systemd service status on Neovim startup",
+-- })
 
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
@@ -885,6 +885,65 @@ if not configs.ls_emmet then
 end
 
 lspconfig.ls_emmet.setup { capabilities = capabilities }
+
+-- Function for search and replace with Telescope
+local function telescope_search_replace()
+  -- Prompt for the word to find
+  local find = vim.fn.input("Find: ")
+  if find == "" then return end
+
+  -- Prompt for the replacement word
+  local replace = vim.fn.input("Replace with: ")
+  if replace == "" then return end
+
+  -- Escape special characters for the substitute command
+  local esc_find = vim.fn.escape(find, '/')
+  local esc_replace = vim.fn.escape(replace, '/')
+
+  -- Load Telescope modules
+  local actions = require("telescope.actions")
+  local action_state = require("telescope.actions.state")
+
+  -- Open Telescope live_grep with prefilled search and custom mapping
+  require("telescope.builtin").live_grep({
+    default_text = find,
+   attach_mappings = function(prompt_bufnr, map)
+      map("i", "<M-CR>", function()
+        local picker = action_state.get_current_picker(prompt_bufnr)
+        local selections = picker:get_multi_selection()
+
+        -- If no selections, use all entries; otherwise, use selected entries
+        if #selections == 0 then
+          actions.send_to_qflist(prompt_bufnr)
+        else
+          -- Populate quickfix with only selected entries
+          local qf_entries = {}
+          for _, entry in ipairs(selections) do
+            table.insert(qf_entries, {
+              filename = entry.filename,
+              lnum = entry.lnum,
+              col = entry.col,
+              text = entry.text,
+            })
+          end
+          vim.fn.setqflist(qf_entries)
+        end
+
+        -- Close Telescope
+        actions.close(prompt_bufnr)
+
+        -- Execute the replacement across quickfix entries
+        local command = string.format("cfdo %%s/%s/%s/g | update", esc_find, esc_replace)
+        vim.cmd(command)
+      end)
+      -- Return true to preserve default Telescope mappings
+      return true
+    end,
+  })
+end
+
+-- Set the keybinding for 'cvr' in normal mode
+vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })
