@@ -1,0 +1,21 @@
+import = [
+    "~/.config/alacritty/themes/themes/hyper.toml"
+]
+
+
+[font.normal]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Regular"
+
+[keyboard]
+bindings = [
+  { key = "F", mods = "Control|Shift", chars = "cvf" },
+  { key = "A", mods = "Control|Shift", chars = "cva" },
+  { key = "Q", mods = "Control|Shift", chars = "cvq" },
+  { key = "E", mods = "Control|Shift", chars = "cve" },
+  { key = "O", mods = "Control|Shift", chars = "cvo" },
+  { key = "F10", mods = "Control|Shift", chars = "cvt" },
+  { key = "`", mods = "Control", chars = "cvx" },
+  { key = "Minus", mods = "Alt", chars = "\u2013" },
+  { key = "Semicolon", mods = "Control|Alt", chars = "cvd" },
+]
