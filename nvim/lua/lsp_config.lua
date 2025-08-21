@@ -59,7 +59,7 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "html", "cssls" }
+  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "html", "cssls"}
 }
 
 function docker_fix()

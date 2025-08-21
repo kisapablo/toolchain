@@ -29,6 +29,8 @@ Plug 'ckipp01/nvim-jenkinsfile-linter'
 
 Plug 'emakman/nvim-latex-previewer'
 
+Plug 'phpactor/phpactor', {'for': 'php', 'tag': '*', 'do': 'composer install --no-dev -o' }
+
 Plug 'aveplen/ruscmd.nvim'
 
 "Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
