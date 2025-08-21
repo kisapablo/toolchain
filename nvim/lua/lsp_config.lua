@@ -59,7 +59,7 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls" }
+  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "html", "cssls" }
 }
 
 function docker_fix()
@@ -75,7 +75,7 @@ vim.cmd [[au BufRead * lua docker_fix()]]
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
-  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls', 'intelephense', 'sqlls',
+  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'intelephense', 'sqlls',
   'html', 'cssls'
 }
 
