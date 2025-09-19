@@ -18,6 +18,7 @@ nmap <silent> <F7> :DapStepInto<CR>
 nmap <silent> <F8> :DapStepOver<CR>
 nmap <silent> <F9> :DapContinue<CR>
 nmap <silent> <C-F9> :RustRun<CR>
+nmap <silent> псс gcc
 
 call plug#begin()
 
@@ -25,8 +26,6 @@ Plug 'f-person/auto-dark-mode.nvim'
 " Plug 'ravibrock/spellwarn.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
-Plug 'ckipp01/nvim-jenkinsfile-linter'
-
 Plug 'emakman/nvim-latex-previewer'
 
 Plug 'aveplen/ruscmd.nvim'
@@ -54,13 +53,11 @@ Plug 'windwp/nvim-autopairs'
 
 Plug 'nvim-lua/plenary.nvim'
 
-" Plug 'github/copilot.vim'
+Plug 'github/copilot.vim'
 
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
 Plug 'rmagatti/auto-session', { 'tag' : 'v2.5.1' }
-" Plug 'greggh/claude-code.nvim'
 " After installing, add this to your init.vim:
-" lua require('claude-code').setup()
 
 "colorscheme
 "Plug 'doums/darcula'
@@ -561,39 +558,39 @@ require('crates').setup {
         },
 }
 
---
--- vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
---   expr = true,
---   replace_keycodes = false
--- })
---
--- vim.g.copilot_no_tab_map = true
 
--- local function disable_copilot_without_vpn(service_name)
---   -- Run systemctl to check service status
---   local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
---   if not handle then
---     return
---   end
---
---   local result = handle:read("*a")
---   handle:close()
---
---   -- Trim whitespace from result
---   result = result:gsub("%s+", "")
---
---   if result == "inactive" then
---     vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
---     vim.cmd('Copilot disable')
---   end
--- end
---
--- vim.api.nvim_create_autocmd("VimEnter", {
---   callback = function()
---     disable_copilot_without_vpn('wg-quick@wg0.service')
---   end,
---   desc = "Check systemd service status on Neovim startup",
--- })
+vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
+  expr = true,
+  replace_keycodes = false
+})
+
+vim.g.copilot_no_tab_map = true
+
+local function disable_copilot_without_vpn(service_name)
+  -- Run systemctl to check service status
+  local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
+  if not handle then
+    return
+  end
+
+  local result = handle:read("*a")
+  handle:close()
+
+  -- Trim whitespace from result
+  result = result:gsub("%s+", "")
+
+  if result == "inactive" then
+    vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
+    vim.cmd('Copilot disable')
+  end
+end
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    disable_copilot_without_vpn('wg-quick@wg0.service')
+  end,
+  desc = "Check systemd service status on Neovim startup",
+})
 
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
@@ -726,96 +723,6 @@ require('auto-session').setup({
 
 vim.keymap.set('n', 'cvx', ':SessionSearch<CR>', {})
 
--- require("codecompanion").setup({
---     adapters = {
---         ollama = {
---           schema = {
---             model = {
---               default = "deepseek-coder:6.7b", -- Set Deepseek-Coder
---             },
---             num_ctx = {
---               default = 4096, -- Smaller context window for lightweight performance
---             },
---             temperature = {
---               default = 0.7, -- Balanced creativity for code and documentation
---             },
---           },
---           env = {
---             url = "http://localhost:11434",
---           },
---         },
---       },
---       strategies = {
---         chat = { adapter = "ollama" }, -- For interactive coding/documentation
---         inline = { adapter = "ollama" }, -- For inline code completion
---       },
---       opts = {
---         log_level = "DEBUG", -- Set to "DEBUG" if troubleshooting needed
---       },
--- })
-
--- require("claude-code").setup({
---   -- Terminal window settings
---   window = {
---     split_ratio = 0.3,      -- Percentage of screen for the terminal window (height for horizontal, width for vertical splits)
---     position = "botright",  -- Position of the window: "botright", "topleft", "vertical", "float", etc.
---     enter_insert = true,    -- Whether to enter insert mode when opening Claude Code
---     hide_numbers = true,    -- Hide line numbers in the terminal window
---     hide_signcolumn = true, -- Hide the sign column in the terminal window
---     
---     -- Floating window configuration (only applies when position = "float")
---     float = {
---       width = "80%",        -- Width: number of columns or percentage string
---       height = "80%",       -- Height: number of rows or percentage string
---       row = "center",       -- Row position: number, "center", or percentage string
---       col = "center",       -- Column position: number, "center", or percentage string
---       relative = "editor",  -- Relative to: "editor" or "cursor"
---       border = "rounded",   -- Border style: "none", "single", "double", "rounded", "solid", "shadow"
---     },
---   },
---   -- File refresh settings
---   refresh = {
---     enable = true,           -- Enable file change detection
---     updatetime = 100,        -- updatetime when Claude Code is active (milliseconds)
---     timer_interval = 1000,   -- How often to check for file changes (milliseconds)
---     show_notifications = true, -- Show notification when files are reloaded
---   },
---   -- Git project settings
---   git = {
---     use_git_root = true,     -- Set CWD to git root when opening Claude Code (if in git project)
---   },
---   -- Shell-specific settings
---   shell = {
---     separator = '&&',        -- Command separator used in shell commands
---     pushd_cmd = 'pushd',     -- Command to push directory onto stack (e.g., 'pushd' for bash/zsh, 'enter' for nushell)
---     popd_cmd = 'popd',       -- Command to pop directory from stack (e.g., 'popd' for bash/zsh, 'exit' for nushell)
---   },
---   -- Command settings
---   command = "claude",        -- Command used to launch Claude Code
---   -- Command variants
---   command_variants = {
---     -- Conversation management
---     continue = "--continue", -- Resume the most recent conversation
---     resume = "--resume",     -- Display an interactive conversation picker
---
---     -- Output options
---     verbose = "--verbose",   -- Enable verbose logging with full turn-by-turn output
---   },
---   -- Keymaps
---   keymaps = {
---     toggle = {
---       normal = "<C-,>",       -- Normal mode keymap for toggling Claude Code, false to disable
---       terminal = "<C-,>",     -- Terminal mode keymap for toggling Claude Code, false to disable
---       variants = {
---         continue = "<leader>cC", -- Normal mode keymap for Claude Code with continue flag
---         verbose = "<leader>cV",  -- Normal mode keymap for Claude Code with verbose flag
---       },
---     },
---     window_navigation = true, -- Enable window navigation keymaps (<C-h/j/k/l>)
---     scrolling = true,         -- Enable scrolling keymaps (<C-f/b>) for page up/down
---   }
--- })
-
 local function check_and_install_ls_emmet()
   -- Get g:plug_home (default: ~/.local/share/nvim/plugged for Neovim)
   local plug_home = vim.g.plug_home or vim.fn.stdpath('data') .. '/plugged'
@@ -944,6 +851,7 @@ end
 
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
+
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })

@@ -59,19 +59,8 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls" }
+  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls" }
 }
-
-function docker_fix()
-  local filename = vim.fn.expand("%:t")
-  if filename == "docker-compose.yaml" or filename == "docker-compose.yml" then
-    vim.bo.filetype = "yaml.docker-compose"
-  else
-    print(filename)
-  end
-end
-
-vim.cmd [[au BufRead * lua docker_fix()]]
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
@@ -119,11 +108,21 @@ for _, lsp in ipairs(servers) do
           --   url = "",
           -- },
           -- -- manually select schemas
-          -- schemas = {
-          --   ['https://json.schemastore.org/kustomization.json'] = 'kustomization.{yml,yaml}',
-          --   ['https://raw.githubusercontent.com/docker/compose/master/compose/config/compose_spec.json'] = 'docker-compose*.{yml,yaml}'
-          --   ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json"] = "argocd-application.yaml",
-          -- }
+          schemas = {
+            kubernetes = "*.yaml",
+            ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
+            ["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
+            ["http://json.schemastore.org/ansible-stable-2.9"] = "roles/tasks/*.{yml,yaml}",
+            ["http://json.schemastore.org/prettierrc"] = ".prettierrc.{yml,yaml}",
+            ["http://json.schemastore.org/kustomization"] = "kustomization.{yml,yaml}",
+            ["http://json.schemastore.org/ansible-playbook"] = "*play*.{yml,yaml}",
+            ["http://json.schemastore.org/chart"] = "Chart.{yml,yaml}",
+            ["https://json.schemastore.org/dependabot-v2"] = ".github/dependabot.{yml,yaml}",
+            ["https://json.schemastore.org/gitlab-ci"] = "*gitlab-ci*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json"] = "*api*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] = "*docker-compose*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json"] = "*flow*.{yml,yaml}",
+          }
         }
       },
       on_attach = on_attach,
