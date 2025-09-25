@@ -59,13 +59,13 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls" }
+  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls"}
 }
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
   'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls', 'intelephense', 'sqlls',
-  'html', 'cssls'
+  'html', 'cssls', 'golangci_lint_ls'
 }
 
 local is_first_delete = true
@@ -102,12 +102,6 @@ for _, lsp in ipairs(servers) do
       settings = {
         yaml = {
           validate = true,
-          -- disable the schema store
-          -- schemaStore = {
-          --   enable = false,
-          --   url = "",
-          -- },
-          -- -- manually select schemas
           schemas = {
             kubernetes = "*.yaml",
             ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
@@ -122,6 +116,7 @@ for _, lsp in ipairs(servers) do
             ["https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json"] = "*api*.{yml,yaml}",
             ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] = "*docker-compose*.{yml,yaml}",
             ["https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json"] = "*flow*.{yml,yaml}",
+            ["https://golangci-lint.run/jsonschema/golangci.jsonschema.json"] = "*.golangci.{yml,yaml}",
           }
         }
       },

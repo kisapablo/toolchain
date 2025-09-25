@@ -565,6 +565,10 @@ vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
 })
 
 vim.g.copilot_no_tab_map = true
+vim.g.copilot_filetypes = {
+    ["*"] = true,
+    ["markdown"] = false,
+}
 
 local function disable_copilot_without_vpn(service_name)
   -- Run systemctl to check service status
