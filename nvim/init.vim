@@ -46,7 +46,7 @@ Plug 'hrsh7th/cmp-buffer'
 Plug 'L3MON4D3/LuaSnip'
 
 " Plug 'simrat39/rust-tools.nvim'
-Plug 'mrcjkb/rustaceanvim', { 'tag': 'v5.26.0' }
+Plug 'mrcjkb/rustaceanvim'
 
 Plug 'windwp/nvim-autopairs'
 
@@ -55,7 +55,7 @@ Plug 'nvim-lua/plenary.nvim'
 Plug 'github/copilot.vim'
 
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
-Plug 'rmagatti/auto-session', { 'tag' : 'v2.5.1' }
+Plug 'rmagatti/auto-session'
 " After installing, add this to your init.vim:
 
 "colorscheme
@@ -84,7 +84,7 @@ Plug 'tpope/vim-dadbod'
 Plug 'kristijanhusak/vim-dadbod-ui'
 Plug 'kristijanhusak/vim-dadbod-completion' "Optional
 
-Plug 'jose-elias-alvarez/null-ls.nvim'
+" Plug 'jose-elias-alvarez/null-ls.nvim'
 Plug 'MunifTanjim/prettier.nvim'
 
 Plug 'kevinhwang91/promise-async'
@@ -94,7 +94,7 @@ Plug 'tpope/vim-sleuth'
 Plug 'ray-x/go.nvim'
 Plug 'ray-x/guihua.lua'
 
-" Plug 'cordx56/rustowl'
+Plug 'cordx56/rustowl'
 
 Plug 'f-person/git-blame.nvim'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
@@ -114,7 +114,7 @@ Plug 'rcarriga/nvim-dap-ui'
 Plug 'sindrets/diffview.nvim'
 Plug 'Hoffs/omnisharp-extended-lsp.nvim'
 Plug 'numToStr/Comment.nvim'
-Plug 'saecki/crates.nvim', { 'tag': 'v0.6.0' }
+Plug 'saecki/crates.nvim'
 
 Plug 'rust-sailfish/sailfish', { 'rtp': 'syntax/vim' }
 
@@ -724,7 +724,7 @@ require('auto-session').setup({
     },
 })
 
-vim.keymap.set('n', 'cvx', ':SessionSearch<CR>', {})
+vim.keymap.set('n', 'cvx', ':AutoSession search<CR>', {})
 
 local function check_and_install_ls_emmet()
   -- Get g:plug_home (default: ~/.local/share/nvim/plugged for Neovim)
@@ -852,10 +852,10 @@ local function telescope_search_replace()
   })
 end
 
--- require('rustowl').setup({
---     auto_attach = true,
---     auto_enable = true,
--- })
+require('rustowl').setup({
+    auto_attach = true,
+    auto_enable = true,
+})
 
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
