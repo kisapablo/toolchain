@@ -59,7 +59,7 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls"}
+  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls", "pyright" }
 }
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
@@ -85,6 +85,7 @@ local function on_attach(client, buffer)
   -- This callback is called when the LSP is atttached/enabled for this buffer
   -- we could set keymaps related to LSP, etc here.
 end
+
 for _, lsp in ipairs(servers) do
   if lsp == 'omnisharp' then
     local config = {
@@ -95,9 +96,10 @@ for _, lsp in ipairs(servers) do
         ["textDocument/implementation"] = require('omnisharp_extended').implementation_handler,
       },
     }
-    lspconfig[lsp].setup(config)
+    vim.lsp.config(lsp, config)
+    vim.lsp.enable({lsp})
   elseif lsp == 'yamlls' then
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab', 'json' },
       settings = {
         yaml = {
@@ -122,9 +124,10 @@ for _, lsp in ipairs(servers) do
       },
       on_attach = on_attach,
       capabilities = capabilities,
-    }
+    })
+    vim.lsp.enable({lsp})
   elseif lsp == 'clangd' then
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       cmd = {
         'clangd',
         '--clang-tidy',
@@ -132,12 +135,14 @@ for _, lsp in ipairs(servers) do
       },
       on_attach = on_attach,
       capabilities = capabilities,
-    }
+    })
+    vim.lsp.enable({lsp})
   else
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       on_attach = on_attach,
       capabilities = capabilities,
-    }
+    })
+    vim.lsp.enable({lsp})
   end
 end
 

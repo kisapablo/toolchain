@@ -23,7 +23,6 @@ nmap <silent> псс gcc
 call plug#begin()
 
 Plug 'f-person/auto-dark-mode.nvim'
-" Plug 'ravibrock/spellwarn.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'emakman/nvim-latex-previewer'
@@ -95,7 +94,7 @@ Plug 'tpope/vim-sleuth'
 Plug 'ray-x/go.nvim'
 Plug 'ray-x/guihua.lua'
 
-"Plug 'cordx56/rustowl'
+" Plug 'cordx56/rustowl'
 
 Plug 'f-person/git-blame.nvim'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
@@ -567,7 +566,7 @@ vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
 vim.g.copilot_no_tab_map = true
 vim.g.copilot_filetypes = {
     ["*"] = true,
-    ["markdown"] = false,
+    -- ["markdown"] = false,
 }
 
 local function disable_copilot_without_vpn(service_name)
@@ -852,6 +851,11 @@ local function telescope_search_replace()
     end,
   })
 end
+
+-- require('rustowl').setup({
+--     auto_attach = true,
+--     auto_enable = true,
+-- })
 
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
