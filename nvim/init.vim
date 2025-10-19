@@ -94,8 +94,6 @@ Plug 'tpope/vim-sleuth'
 Plug 'ray-x/go.nvim'
 Plug 'ray-x/guihua.lua'
 
-Plug 'cordx56/rustowl'
-
 Plug 'f-person/git-blame.nvim'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
 " Plug 'saecki/crates.nvim'
@@ -126,36 +124,9 @@ Plug 'prabirshrestha/async.vim'
 
 Plug 'nvim-treesitter/nvim-treesitter-context' 
 
-" Multiple Plug commands can be written in a single line using | separators
-" Plug 'SirVer/ultisnips' 
-" Plug 'honza/vim-snippets'
-
-" On-demand loading
-" Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
-" Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
-
-" Using a non-default branch
-" Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
-
-" Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
-" Plug 'fatih/vim-go', { 'tag': '*' }
-
-" Plugin options
-" Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
-
-" Plugin outside ~/.vim/plugged with post-update hook
-" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-
-" Unmanaged plugin (manually installed and updated)
-" Plug '~/my-prototype-plugin'
-
-" Initialize plugin system
-" - Automatically executes `filetype plugin indent on` and `syntax enable`.
-
 call plug#end()
 
 "Plugin configuration
-"source $HOME/.config/nvim/themes/darcula.vim
 set termguicolors
 highlight rustLifetime guifg=#20999d
 lua << EOF
@@ -851,11 +822,6 @@ local function telescope_search_replace()
     end,
   })
 end
-
-require('rustowl').setup({
-    auto_attach = true,
-    auto_enable = true,
-})
 
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })

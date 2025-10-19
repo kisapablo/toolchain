@@ -1,6 +1,5 @@
 -- Add additional capabilities supported by nvim-cmp
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
-local lspconfig = require('lspconfig')
+-- local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 require 'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all"
@@ -123,7 +122,7 @@ for _, lsp in ipairs(servers) do
         }
       },
       on_attach = on_attach,
-      capabilities = capabilities,
+      -- capabilities = capabilities,
     })
     vim.lsp.enable({lsp})
   elseif lsp == 'clangd' then
@@ -134,13 +133,13 @@ for _, lsp in ipairs(servers) do
         '--background-index',
       },
       on_attach = on_attach,
-      capabilities = capabilities,
+      -- capabilities = capabilities,
     })
     vim.lsp.enable({lsp})
   else
     vim.lsp.config(lsp, {
       on_attach = on_attach,
-      capabilities = capabilities,
+      -- capabilities = capabilities,
     })
     vim.lsp.enable({lsp})
   end
