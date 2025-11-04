@@ -173,6 +173,37 @@ fallback = "dark"
 -- })
 -- vim.opt.spell = true
 -- vim.opt.spelllang = {'en_us', 'en_gb', 'ru'}
+
+local function show_documentation()
+    local filetype = vim.bo.filetype
+    if filetype == "vim" or filetype == "help" then
+        vim.cmd('h '..vim.fn.expand('<cword>'))
+    elseif filetype == "man" then
+        vim.cmd('Man '..vim.fn.expand('<cword>'))
+    elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
+        require('crates').show_popup()
+    else
+        vim.lsp.buf.hover()
+    end
+end
+
+local function is_float_open()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local config = vim.api.nvim_win_get_config(win)
+        -- Check if the window is a floating window (relative is non-empty)
+        if config.relative ~= "" then
+            -- Exclude sticky panels by checking properties (e.g., width, height, or buffer type)
+            local buf = vim.api.nvim_win_get_buf(win)
+            local buf_name = vim.api.nvim_buf_get_name(buf)
+            local buf_type = vim.api.nvim_buf_get_option(buf, "buftype")
+            -- Heuristic: Documentation popups are typically not too narrow/tall and not tied to specific plugins like sticky panels
+            if buf_type ~= "nofile" and not buf_name:match("lspsaga") and not buf_name:match("navic") then
+                return true, win
+            end
+        end
+    end
+    return false, nil
+end
     
 vim.cmd("colorscheme darcula-solid-idea")
 
@@ -225,7 +256,25 @@ vim.keymap.set("n", "<C-M-p>", [[<cmd>horizontal resize -2<cr>]]) -- make the wi
 vim.keymap.set("n", "cvd", [[<cmd>horizontal resize +2<cr>]]) -- make the window smaller vertically
 vim.keymap.set("n", "<C-M-[>", [[<cmd>vertical resize -5<cr>]]) -- make the window bigger horizontally by pressing shift and =
 vim.keymap.set("n", "<C-M-]>", [[<cmd>vertical resize +5<cr>]]) -- make the window smaller horizontally by pressing shift and -
-vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
+
+-- vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
+vim.keymap.set("n", "<Tab>", function()
+    if is_float_open() then
+        -- Focus the floating window
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local config = vim.api.nvim_win_get_config(win)
+            if config.relative ~= "" then
+                vim.api.nvim_set_current_win(win)
+                return
+            end
+        end
+    else
+        -- Switch to next panel
+        vim.cmd("wincmd w")
+    end
+end, { noremap = true, silent = true })
+
+
 
 vim.keymap.set("n", "<M-5>", function()  
     -- local widgets = require('dapui')
@@ -331,19 +380,6 @@ require("nvim-tree").setup({
   },
   on_attach = nvim_tree_attach
 })
-
-local function show_documentation()
-    local filetype = vim.bo.filetype
-    if filetype == "vim" or filetype == "help" then
-        vim.cmd('h '..vim.fn.expand('<cword>'))
-    elseif filetype == "man" then
-        vim.cmd('Man '..vim.fn.expand('<cword>'))
-    elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
-        require('crates').show_popup()
-    else
-        vim.lsp.buf.hover()
-    end
-end
 
 vim.keymap.set('n', 'K', show_documentation, { silent = true })
 
