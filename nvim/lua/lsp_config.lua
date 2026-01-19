@@ -1,6 +1,5 @@
 -- Add additional capabilities supported by nvim-cmp
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
-local lspconfig = require('lspconfig')
+-- local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 require 'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all"
@@ -62,17 +61,6 @@ require('mason-lspconfig').setup {
   ensure_installed = { "lua_ls", "docker_compose_language_service", "omnisharp", "taplo", "vhdl_ls", "yamlls", "html", "cssls"}
 }
 
-function docker_fix()
-  local filename = vim.fn.expand("%:t")
-  if filename == "docker-compose.yaml" or filename == "docker-compose.yml" then
-    vim.bo.filetype = "yaml.docker-compose"
-  else
-    print(filename)
-  end
-end
-
-vim.cmd [[au BufRead * lua docker_fix()]]
-
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
   'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'intelephense', 'sqlls',
@@ -96,6 +84,7 @@ local function on_attach(client, buffer)
   -- This callback is called when the LSP is atttached/enabled for this buffer
   -- we could set keymaps related to LSP, etc here.
 end
+
 for _, lsp in ipairs(servers) do
   if lsp == 'omnisharp' then
     local config = {
@@ -106,44 +95,56 @@ for _, lsp in ipairs(servers) do
         ["textDocument/implementation"] = require('omnisharp_extended').implementation_handler,
       },
     }
-    lspconfig[lsp].setup(config)
+    vim.lsp.config(lsp, config)
+    vim.lsp.enable({ lsp })
   elseif lsp == 'yamlls' then
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab', 'json' },
       settings = {
         yaml = {
           validate = true,
-          -- disable the schema store
-          -- schemaStore = {
-          --   enable = false,
-          --   url = "",
-          -- },
-          -- -- manually select schemas
-          -- schemas = {
-          --   ['https://json.schemastore.org/kustomization.json'] = 'kustomization.{yml,yaml}',
-          --   ['https://raw.githubusercontent.com/docker/compose/master/compose/config/compose_spec.json'] = 'docker-compose*.{yml,yaml}'
-          --   ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json"] = "argocd-application.yaml",
-          -- }
+          schemas = {
+            kubernetes = "*.yaml",
+            ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
+            ["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
+            ["http://json.schemastore.org/ansible-stable-2.9"] = "roles/tasks/*.{yml,yaml}",
+            ["http://json.schemastore.org/prettierrc"] = ".prettierrc.{yml,yaml}",
+            ["http://json.schemastore.org/kustomization"] = "kustomization.{yml,yaml}",
+            ["http://json.schemastore.org/ansible-playbook"] = "*play*.{yml,yaml}",
+            ["http://json.schemastore.org/chart"] = "Chart.{yml,yaml}",
+            ["https://json.schemastore.org/dependabot-v2"] = ".github/dependabot.{yml,yaml}",
+            ["https://json.schemastore.org/gitlab-ci"] = "*gitlab-ci*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json"] =
+            "*api*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] =
+            "*docker-compose*.{yml,yaml}",
+            ["https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json"] =
+            "*flow*.{yml,yaml}",
+            ["https://golangci-lint.run/jsonschema/golangci.jsonschema.json"] = "*.golangci.{yml,yaml}",
+          }
         }
       },
       on_attach = on_attach,
-      capabilities = capabilities,
-    }
+      -- capabilities = capabilities,
+    })
+    vim.lsp.enable({ lsp })
   elseif lsp == 'clangd' then
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       cmd = {
         'clangd',
         '--clang-tidy',
         '--background-index',
       },
       on_attach = on_attach,
-      capabilities = capabilities,
-    }
+      -- capabilities = capabilities,
+    })
+    vim.lsp.enable({ lsp })
   else
-    lspconfig[lsp].setup {
+    vim.lsp.config(lsp, {
       on_attach = on_attach,
-      capabilities = capabilities,
-    }
+      -- capabilities = capabilities,
+    })
+    vim.lsp.enable({ lsp })
   end
 end
 
@@ -174,6 +175,11 @@ local opts         = {
           },
           unsetTest = true,
         },
+        -- check = {
+        --   allTargets = false,
+        --   target = "riscv32imac-unknown-none-elf"
+        --
+        -- },
         workspace = {
           symbol = {
             search = {
@@ -182,7 +188,7 @@ local opts         = {
           }
         },
         lru = {
-          capacity = 512
+          capacity = 128,
         },
 
         procMacro = {
@@ -253,38 +259,36 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
-    { name = 'crates' },
   },
 }
 
-local null_ls = require("null-ls")
-
-local group = vim.api.nvim_create_augroup("lsp_format_on_save", { clear = false })
-local event = "BufWritePre" -- or "BufWritePost"
-local async = event == "BufWritePost"
-null_ls.setup({
-  on_attach = function(client, bufnr)
-    if client.supports_method("textDocument/formatting") then
-      vim.keymap.set("n", "<Leader>f", function()
-        vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
-      end, { buffer = bufnr, desc = "[lsp] format" })
-
-      -- format on save
-      vim.api.nvim_clear_autocmds({ buffer = bufnr, group = group })
-      vim.api.nvim_create_autocmd(event, {
-        buffer = bufnr,
-        group = group,
-        callback = function()
-          vim.lsp.buf.format({ bufnr = bufnr, async = async })
-        end,
-        desc = "[lsp] format on save",
-      })
-    end
-
-    if client.supports_method("textDocument/rangeFormatting") then
-      vim.keymap.set("x", "<Leader>f", function()
-        vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
-      end, { buffer = bufnr, desc = "[lsp] format" })
-    end
-  end,
-})
+-- local null_ls = require("null-ls")
+-- local group = vim.api.nvim_create_augroup("lsp_format_on_save", { clear = false })
+-- local event = "BufWritePre" -- or "BufWritePost"
+-- local async = event == "BufWritePost"
+-- null_ls.setup({
+--   on_attach = function(client, bufnr)
+--     if client.supports_method("textDocument/formatting") then
+--       vim.keymap.set("n", "<Leader>f", function()
+--         vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
+--       end, { buffer = bufnr, desc = "[lsp] format" })
+--
+--       -- format on save
+--       vim.api.nvim_clear_autocmds({ buffer = bufnr, group = group })
+--       vim.api.nvim_create_autocmd(event, {
+--         buffer = bufnr,
+--         group = group,
+--         callback = function()
+--           vim.lsp.buf.format({ bufnr = bufnr, async = async })
+--         end,
+--         desc = "[lsp] format on save",
+--       })
+--     end
+--
+--     if client.supports_method("textDocument/rangeFormatting") then
+--       vim.keymap.set("x", "<Leader>f", function()
+--         vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
+--       end, { buffer = bufnr, desc = "[lsp] format" })
+--     end
+--   end,
+-- })

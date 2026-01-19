@@ -18,15 +18,13 @@ nmap <silent> <F7> :DapStepInto<CR>
 nmap <silent> <F8> :DapStepOver<CR>
 nmap <silent> <F9> :DapContinue<CR>
 nmap <silent> <C-F9> :RustRun<CR>
+nmap <silent> псс gcc
 
 call plug#begin()
 
 Plug 'f-person/auto-dark-mode.nvim'
-" Plug 'ravibrock/spellwarn.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
-Plug 'ckipp01/nvim-jenkinsfile-linter'
-
 Plug 'emakman/nvim-latex-previewer'
 
 Plug 'phpactor/phpactor', {'for': 'php', 'tag': '*', 'do': 'composer install --no-dev -o' }
@@ -50,17 +48,15 @@ Plug 'hrsh7th/cmp-buffer'
 Plug 'L3MON4D3/LuaSnip'
 
 " Plug 'simrat39/rust-tools.nvim'
-Plug 'mrcjkb/rustaceanvim', { 'tag': 'v5.26.0' }
+Plug 'mrcjkb/rustaceanvim'
 
 Plug 'windwp/nvim-autopairs'
 
 Plug 'nvim-lua/plenary.nvim'
 
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
-Plug 'rmagatti/auto-session', { 'tag' : 'v2.5.1' }
-" Plug 'greggh/claude-code.nvim'
+Plug 'rmagatti/auto-session'
 " After installing, add this to your init.vim:
-" lua require('claude-code').setup()
 
 "colorscheme
 "Plug 'doums/darcula'
@@ -88,7 +84,7 @@ Plug 'tpope/vim-dadbod'
 Plug 'kristijanhusak/vim-dadbod-ui'
 Plug 'kristijanhusak/vim-dadbod-completion' "Optional
 
-Plug 'jose-elias-alvarez/null-ls.nvim'
+" Plug 'jose-elias-alvarez/null-ls.nvim'
 Plug 'MunifTanjim/prettier.nvim'
 
 Plug 'kevinhwang91/promise-async'
@@ -97,8 +93,6 @@ Plug 'tpope/vim-sleuth'
 
 Plug 'ray-x/go.nvim'
 Plug 'ray-x/guihua.lua'
-
-"Plug 'cordx56/rustowl'
 
 Plug 'f-person/git-blame.nvim'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
@@ -118,7 +112,7 @@ Plug 'rcarriga/nvim-dap-ui'
 Plug 'sindrets/diffview.nvim'
 Plug 'Hoffs/omnisharp-extended-lsp.nvim'
 Plug 'numToStr/Comment.nvim'
-Plug 'saecki/crates.nvim', { 'tag': 'v0.6.0' }
+Plug 'saecki/crates.nvim'
 
 Plug 'rust-sailfish/sailfish', { 'rtp': 'syntax/vim' }
 
@@ -130,36 +124,9 @@ Plug 'prabirshrestha/async.vim'
 
 Plug 'nvim-treesitter/nvim-treesitter-context' 
 
-" Multiple Plug commands can be written in a single line using | separators
-" Plug 'SirVer/ultisnips' 
-" Plug 'honza/vim-snippets'
-
-" On-demand loading
-" Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
-" Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
-
-" Using a non-default branch
-" Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
-
-" Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
-" Plug 'fatih/vim-go', { 'tag': '*' }
-
-" Plugin options
-" Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
-
-" Plugin outside ~/.vim/plugged with post-update hook
-" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-
-" Unmanaged plugin (manually installed and updated)
-" Plug '~/my-prototype-plugin'
-
-" Initialize plugin system
-" - Automatically executes `filetype plugin indent on` and `syntax enable`.
-
 call plug#end()
 
 "Plugin configuration
-"source $HOME/.config/nvim/themes/darcula.vim
 set termguicolors
 highlight rustLifetime guifg=#20999d
 lua << EOF
@@ -206,6 +173,37 @@ fallback = "dark"
 -- })
 -- vim.opt.spell = true
 -- vim.opt.spelllang = {'en_us', 'en_gb', 'ru'}
+
+local function show_documentation()
+    local filetype = vim.bo.filetype
+    if filetype == "vim" or filetype == "help" then
+        vim.cmd('h '..vim.fn.expand('<cword>'))
+    elseif filetype == "man" then
+        vim.cmd('Man '..vim.fn.expand('<cword>'))
+    elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
+        require('crates').show_popup()
+    else
+        vim.lsp.buf.hover()
+    end
+end
+
+local function is_float_open()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local config = vim.api.nvim_win_get_config(win)
+        -- Check if the window is a floating window (relative is non-empty)
+        if config.relative ~= "" then
+            -- Exclude sticky panels by checking properties (e.g., width, height, or buffer type)
+            local buf = vim.api.nvim_win_get_buf(win)
+            local buf_name = vim.api.nvim_buf_get_name(buf)
+            local buf_type = vim.api.nvim_buf_get_option(buf, "buftype")
+            -- Heuristic: Documentation popups are typically not too narrow/tall and not tied to specific plugins like sticky panels
+            if buf_type ~= "nofile" and not buf_name:match("lspsaga") and not buf_name:match("navic") then
+                return true, win
+            end
+        end
+    end
+    return false, nil
+end
     
 vim.cmd("colorscheme darcula-solid-idea")
 
@@ -258,7 +256,25 @@ vim.keymap.set("n", "<C-M-p>", [[<cmd>horizontal resize -2<cr>]]) -- make the wi
 vim.keymap.set("n", "cvd", [[<cmd>horizontal resize +2<cr>]]) -- make the window smaller vertically
 vim.keymap.set("n", "<C-M-[>", [[<cmd>vertical resize -5<cr>]]) -- make the window bigger horizontally by pressing shift and =
 vim.keymap.set("n", "<C-M-]>", [[<cmd>vertical resize +5<cr>]]) -- make the window smaller horizontally by pressing shift and -
-vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
+
+-- vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
+vim.keymap.set("n", "<Tab>", function()
+    if is_float_open() then
+        -- Focus the floating window
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local config = vim.api.nvim_win_get_config(win)
+            if config.relative ~= "" then
+                vim.api.nvim_set_current_win(win)
+                return
+            end
+        end
+    else
+        -- Switch to next panel
+        vim.cmd("wincmd w")
+    end
+end, { noremap = true, silent = true })
+
+
 
 vim.keymap.set("n", "<M-5>", function()  
     -- local widgets = require('dapui')
@@ -364,19 +380,6 @@ require("nvim-tree").setup({
   },
   on_attach = nvim_tree_attach
 })
-
-local function show_documentation()
-    local filetype = vim.bo.filetype
-    if filetype == "vim" or filetype == "help" then
-        vim.cmd('h '..vim.fn.expand('<cword>'))
-    elseif filetype == "man" then
-        vim.cmd('Man '..vim.fn.expand('<cword>'))
-    elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
-        require('crates').show_popup()
-    else
-        vim.lsp.buf.hover()
-    end
-end
 
 vim.keymap.set('n', 'K', show_documentation, { silent = true })
 
@@ -554,13 +557,17 @@ vim.api.nvim_set_hl(0, 'LspInlayHint', {
 require('gitblame').setup()
 require('plantuml').setup()
 require('crates').setup {
-    completion = {
-            cmp = {
-                enabled = true,
-            },
-        },
+    lsp = {
+        enabled = true,
+        on_attach = function(client, bufnr)
+            -- the same on_attach function as for your other language servers
+            -- can be ommited if you're using the `LspAttach` autocmd
+        end,
+        actions = true,
+        completion = true,
+        hover = true,
+    },
 }
-
 
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
@@ -691,7 +698,7 @@ require('auto-session').setup({
     },
 })
 
-vim.keymap.set('n', 'cvx', ':SessionSearch<CR>', {})
+vim.keymap.set('n', 'cvx', ':AutoSession search<CR>', {})
 
 local function check_and_install_ls_emmet()
   -- Get g:plug_home (default: ~/.local/share/nvim/plugged for Neovim)
@@ -770,6 +777,66 @@ if not configs.ls_emmet then
 end
 
 lspconfig.ls_emmet.setup { capabilities = capabilities }
+
+-- Function for search and replace with Telescope
+local function telescope_search_replace()
+  -- Prompt for the word to find
+  local find = vim.fn.input("Find: ")
+  if find == "" then return end
+
+  -- Prompt for the replacement word
+  local replace = vim.fn.input("Replace with: ")
+  if replace == "" then return end
+
+  -- Escape special characters for the substitute command
+  local esc_find = vim.fn.escape(find, '/')
+  local esc_replace = vim.fn.escape(replace, '/')
+
+  -- Load Telescope modules
+  local actions = require("telescope.actions")
+  local action_state = require("telescope.actions.state")
+
+  -- Open Telescope live_grep with prefilled search and custom mapping
+  require("telescope.builtin").live_grep({
+    default_text = find,
+   attach_mappings = function(prompt_bufnr, map)
+      map("i", "<M-CR>", function()
+        local picker = action_state.get_current_picker(prompt_bufnr)
+        local selections = picker:get_multi_selection()
+
+        -- If no selections, use all entries; otherwise, use selected entries
+        if #selections == 0 then
+          actions.send_to_qflist(prompt_bufnr)
+        else
+          -- Populate quickfix with only selected entries
+          local qf_entries = {}
+          for _, entry in ipairs(selections) do
+            table.insert(qf_entries, {
+              filename = entry.filename,
+              lnum = entry.lnum,
+              col = entry.col,
+              text = entry.text,
+            })
+          end
+          vim.fn.setqflist(qf_entries)
+        end
+
+        -- Close Telescope
+        actions.close(prompt_bufnr)
+
+        -- Execute the replacement across quickfix entries
+        local command = string.format("cfdo %%s/%s/%s/g | update", esc_find, esc_replace)
+        vim.cmd(command)
+      end)
+      -- Return true to preserve default Telescope mappings
+      return true
+    end,
+  })
+end
+
+-- Set the keybinding for 'cvr' in normal mode
+vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
+
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })
