@@ -22,6 +22,11 @@ nmap <silent> псс gcc
 
 call plug#begin()
 
+Plug 'scalameta/nvim-metals'
+
+Plug 'tact-lang/tact.vim'
+
+Plug 'uga-rosa/translate.nvim'
 Plug 'f-person/auto-dark-mode.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
@@ -57,6 +62,16 @@ Plug 'github/copilot.vim'
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
 Plug 'rmagatti/auto-session'
 " After installing, add this to your init.vim:
+
+Plug 'nvim-lualine/lualine.nvim'
+
+" Plug 'inhesrom/remote-ssh.nvim'
+
+Plug 'NickvanDyke/opencode.nvim'
+Plug 'folke/snacks.nvim'
+
+" Plug 'kiddos/gemini.nvim'
+
 
 "colorscheme
 "Plug 'doums/darcula'
@@ -174,37 +189,45 @@ fallback = "dark"
 -- vim.opt.spell = true
 -- vim.opt.spelllang = {'en_us', 'en_gb', 'ru'}
 
+-- local function show_documentation()
+--     local filetype = vim.bo.filetype
+--     if filetype == "vim" or filetype == "help" then
+--         vim.cmd('rightbelow vertical h '..vim.fn.expand('<cword>'))
+--     elseif filetype == "man" or filetype == "just" then
+--         vim.cmd('rightbelow vertical Man '..vim.fn.expand('<cword>'))
+--     elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
+--         require('crates').show_popup()
+--     else
+--         vim.lsp.buf.hover()
+--     end
+-- end
+
 local function show_documentation()
     local filetype = vim.bo.filetype
-    if filetype == "vim" or filetype == "help" then
-        vim.cmd('h '..vim.fn.expand('<cword>'))
-    elseif filetype == "man" then
-        vim.cmd('Man '..vim.fn.expand('<cword>'))
-    elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
-        require('crates').show_popup()
-    else
-        vim.lsp.buf.hover()
-    end
-end
+    local word = vim.fn.expand('<cword>')
 
-local function is_float_open()
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-        local config = vim.api.nvim_win_get_config(win)
-        -- Check if the window is a floating window (relative is non-empty)
-        if config.relative ~= "" then
-            -- Exclude sticky panels by checking properties (e.g., width, height, or buffer type)
-            local buf = vim.api.nvim_win_get_buf(win)
-            local buf_name = vim.api.nvim_buf_get_name(buf)
-            local buf_type = vim.api.nvim_buf_get_option(buf, "buftype")
-            -- Heuristic: Documentation popups are typically not too narrow/tall and not tied to specific plugins like sticky panels
-            if buf_type ~= "nofile" and not buf_name:match("lspsaga") and not buf_name:match("navic") then
-                return true, win
-            end
+    if filetype == 'vim' or filetype == 'help' then
+        vim.cmd('rightbelow vert h ' .. word)
+
+    elseif filetype == 'man' or filetype == 'just' then
+        vim.cmd('rightbelow vert Man ' .. word)
+
+    elseif vim.fn.expand('%:t') == 'Cargo.toml' then
+        local ok, crates = pcall(require, 'crates')
+        if ok and crates.popup_available() then
+            crates.show_popup()
+            return
         end
     end
-    return false, nil
+
+    local clients = vim.lsp.get_clients({ bufnr = 0 })
+    if #clients > 0 then
+        vim.lsp.buf.hover()
+    else
+        vim.notify("No LSP or documentation available", vim.log.levels.INFO)
+    end
 end
-    
+ 
 vim.cmd("colorscheme darcula-solid-idea")
 
 ts_context = require'treesitter-context'
@@ -257,9 +280,27 @@ vim.keymap.set("n", "cvd", [[<cmd>horizontal resize +2<cr>]]) -- make the window
 vim.keymap.set("n", "<C-M-[>", [[<cmd>vertical resize -5<cr>]]) -- make the window bigger horizontally by pressing shift and =
 vim.keymap.set("n", "<C-M-]>", [[<cmd>vertical resize +5<cr>]]) -- make the window smaller horizontally by pressing shift and -
 
+local function is_documentation_float_open()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local config = vim.api.nvim_win_get_config(win)
+        -- Check if the window is a floating window (relative is non-empty)
+        if config.relative ~= "" then
+            local buf = vim.api.nvim_win_get_buf(win)
+            local buf_filetype = vim.api.nvim_buf_get_option(buf, "filetype")
+            
+            -- Only return true for markdown documentation windows
+            if buf_filetype == "markdown" then
+                return true, win
+            end
+        end
+    end
+    return false, nil
+end
+
 -- vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
 vim.keymap.set("n", "<Tab>", function()
-    if is_float_open() then
+    local float_is_open = is_documentation_float_open()
+    if float_is_open then
         -- Focus the floating window
         for _, win in ipairs(vim.api.nvim_list_wins()) do
             local config = vim.api.nvim_win_get_config(win)
@@ -269,8 +310,45 @@ vim.keymap.set("n", "<Tab>", function()
             end
         end
     else
-        -- Switch to next panel
-        vim.cmd("wincmd w")
+        -- Switch to next panel, skipping terminal and floating windows
+        local current_win = vim.api.nvim_get_current_win()
+        local all_windows = vim.api.nvim_list_wins()
+        
+        -- Filter to only real (non-floating) windows
+        local real_windows = {}
+        for _, win in ipairs(all_windows) do
+            local config = vim.api.nvim_win_get_config(win)
+            if config.relative == "" then  -- Only real windows (not floating)
+                table.insert(real_windows, win)
+            end
+        end
+        
+        -- Find current window index in real windows
+        local current_idx = 0
+        for i, win in ipairs(real_windows) do
+            if win == current_win then
+                current_idx = i
+                break
+            end
+        end
+        
+        -- Find next non-terminal real window
+        for i = 1, #real_windows do
+            local next_idx = (current_idx + i - 1) % #real_windows + 1
+            local next_win = real_windows[next_idx]
+            
+            -- Skip current window
+            if next_win ~= current_win then
+                local buf = vim.api.nvim_win_get_buf(next_win)
+                local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+                
+                -- If not a terminal, switch to it
+                if buftype ~= "terminal" then
+                    vim.api.nvim_set_current_win(next_win)
+                    return
+                end
+            end
+        end
     end
 end, { noremap = true, silent = true })
 
@@ -581,32 +659,6 @@ vim.g.copilot_filetypes = {
     -- ["markdown"] = false,
 }
 
-local function disable_copilot_without_vpn(service_name)
-  -- Run systemctl to check service status
-  local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
-  if not handle then
-    return
-  end
-
-  local result = handle:read("*a")
-  handle:close()
-
-  -- Trim whitespace from result
-  result = result:gsub("%s+", "")
-
-  if result == "inactive" then
-    vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
-    vim.cmd('Copilot disable')
-  end
-end
-
-vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    disable_copilot_without_vpn('wg-quick@wg0.service')
-  end,
-  desc = "Check systemd service status on Neovim startup",
-})
-
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
 vim.g.db_ui_show_database_icon = 1
@@ -736,7 +788,7 @@ require('auto-session').setup({
     },
 })
 
-vim.keymap.set('n', 'cvx', ':AutoSession search<CR>', {})
+vim.keymap.set('n', 'cvx', ':Telescope session-lens<CR>', {})
 
 local function check_and_install_ls_emmet()
   -- Get g:plug_home (default: ~/.local/share/nvim/plugged for Neovim)
@@ -867,6 +919,128 @@ end
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
 
+require('lualine').setup {
+  sections = {
+
+    lualine_a = { 'mode' },
+
+    lualine_b = { 'branch', 'diff', 'diagnostics' },
+
+    lualine_c = { { 'filename', path = 1 } },
+
+    lualine_x = { 'encoding', 'fileformat', 'filetype' },
+
+    lualine_y = { 'progress' },
+
+    lualine_z = { 'location' }
+
+  },
+
+  inactive_sections = {
+
+    lualine_a = {},
+
+    lualine_b = {},
+
+    lualine_c = { { 'filename', path = 1 } },
+
+    lualine_x = { 'location' },
+
+    lualine_y = {},
+
+    lualine_z = {}
+
+  },
+
+  tabline = {},
+
+  extensions = {}
+
+}
+
+vim.g.opencode_opts = {
+   -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition" on the type or field.
+}
+
+-- Required for `opts.events.reload`.
+vim.o.autoread = true
+
+-- Recommended/example keymaps.
+vim.keymap.set({ "n", "x" }, "<leader>a", function() require("opencode").ask("@this: ", { submit = true }) end, { desc = "Ask opencode…" })
+vim.keymap.set({ "n", "x" }, "<leader>s", function() require("opencode").select() end,                          { desc = "Execute opencode action…" })
+vim.keymap.set("n",          "<leader>l", function() return require("opencode").operator("@this ") .. "_" end, { desc = "Add line to opencode", expr = true })
+-- vim.keymap.set({"n","t"}, "<M-s>", function() return require("opencode").command("session.list") end, { desc = "Show OpenCode sessions", expr = true })
+vim.keymap.set({ "n", "t" }, "cva", function() require("opencode").toggle() end,                          { desc = "Toggle opencode" })
+
+local last_non_terminal_win = nil
+
+vim.keymap.set({"n", "t"}, "<M-F12>", function()
+    local current_win = vim.api.nvim_get_current_win()
+    local current_buf = vim.api.nvim_win_get_buf(current_win)
+    local current_buftype = vim.api.nvim_buf_get_option(current_buf, "buftype")
+    
+    -- If currently in terminal, go back to previous window
+    if current_buftype == "terminal" then
+        if last_non_terminal_win and vim.api.nvim_win_is_valid(last_non_terminal_win) then
+            vim.api.nvim_set_current_win(last_non_terminal_win)
+        else
+            -- If no valid previous window, find any non-terminal window
+            local windows = vim.api.nvim_list_wins()
+            for _, win in ipairs(windows) do
+                if win ~= current_win then
+                    local buf = vim.api.nvim_win_get_buf(win)
+                    local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+                    if buftype ~= "terminal" then
+                        vim.api.nvim_set_current_win(win)
+                        return
+                    end
+                end
+            end
+        end
+    else
+        -- Currently not in terminal, save position and switch to terminal
+        last_non_terminal_win = current_win
+        
+        -- Find first terminal window
+        local windows = vim.api.nvim_list_wins()
+        for _, win in ipairs(windows) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+            
+            if buftype == "terminal" then
+                vim.api.nvim_set_current_win(win)
+                -- Enter insert mode in terminal
+                vim.cmd("startinsert")
+                return
+            end
+        end
+        
+        -- No terminal found
+        print("No terminal window found")
+    end
+end, { noremap = true, silent = true })
+
+
+
+-- vim.keymap.set({ "n", "x" }, "go",  function() return require("opencode").operator("@this ") end,        { desc = "Add range to opencode", expr = true })
+-- vim.keymap.set("n",          "goo", function() return require("opencode").operator("@this ") .. "_" end, { desc = "Add line to opencode", expr = true })
+--
+-- vim.keymap.set("n", "<S-C-u>", function() require("opencode").command("session.half.page.up") end,   { desc = "Scroll opencode up" })
+-- vim.keymap.set("n", "<S-C-d>", function() require("opencode").command("session.half.page.down") end, { desc = "Scroll opencode down" })
+--
+-- -- You may want these if you stick with the opinionated "<C-a>" and "<C-x>" above — otherwise consider "<leader>o…".
+-- vim.keymap.set("n", "+", "<C-a>", { desc = "Increment under cursor", noremap = true })
+-- vim.keymap.set("n", "-", "<C-x>", { desc = "Decrement under cursor", noremap = true })
+
+require('snacks').setup{
+    defaults = {
+        border = 'rounded',
+        max_width = 80,
+        max_height = 20,
+        timeout = 5000,
+    },
+    input = {}, picker = {}, terminal = {}
+}
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })

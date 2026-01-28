@@ -11,6 +11,7 @@ alias crr="cargo run --release"
 alias cm="cargo make"
 alias dc-up="docker-compose -d up &"
 alias dc-down="docker-compose -d down &"
+alias j="just"
 
 alias blender="/opt/blender/blender-latest/blender"
 alias ue="/opt/unreal-engine/unreal-engine-latest/Engine/Binaries/Linux/UnrealEditor"
@@ -46,12 +47,3 @@ alias rnm="sudo systemctl restart NetworkManager"
 alias console="tokio-console"
 #alias cat="bat"
 alias py="python"
-
-export EDITOR="nvim"
-function parse_git_branch() {
-     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
-}
-
-export PS1="\u@\h \[\e[32m\]\w \[\e[91m\]\$(parse_git_branch)\[\e[00m\]$ "
-export SYSTEMD_PAGER=
-export PROMPT_DIRTRIM=2
