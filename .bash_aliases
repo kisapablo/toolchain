@@ -1,3 +1,4 @@
+alias vi=nvim
 alias sl=ls
 alias ns=nautilus
 
@@ -46,6 +47,7 @@ alias rnm="sudo systemctl restart NetworkManager"
 alias console="tokio-console"
 #alias cat="bat"
 alias py="python"
+alias gr="go run ."
 
 export EDITOR="nvim"
 function parse_git_branch() {

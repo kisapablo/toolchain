@@ -58,13 +58,13 @@ vim.api.nvim_create_autocmd("FileType", {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls", "pyright" }
+  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls", "pyright", 'just' }
 }
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
   'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls', 'intelephense', 'sqlls',
-  'html', 'cssls', 'golangci_lint_ls'
+  'html', 'cssls', 'golangci_lint_ls', 'codebook-lsp', 'just',
 }
 
 local is_first_delete = true
@@ -91,7 +91,7 @@ for _, lsp in ipairs(servers) do
       handlers = {
         ["textDocument/definition"] = require('omnisharp_extended').definition_handler,
         ["textDocument/typeDefinition"] = require('omnisharp_extended').type_definition_handler,
-        ["textDocument/references"] = require('omnisharp_extended').references_handler,
+        ["textDocument/references"] = require('omnisharp_extended').referenes_handler,
         ["textDocument/implementation"] = require('omnisharp_extended').implementation_handler,
       },
     }
@@ -173,13 +173,14 @@ local opts         = {
           buildScripts = {
             enable = true,
           },
-          unsetTest = true,
+          -- unsetTest = true,
+          -- target = "aarch64-linux-android",
         },
-        -- check = {
-        --   allTargets = false,
-        --   target = "riscv32imac-unknown-none-elf"
-        --
-        -- },
+        check = {
+          -- use all target true
+          allTargets = true,
+          -- target = "riscv32imac-unknown-none-elf"
+        },
         workspace = {
           symbol = {
             search = {

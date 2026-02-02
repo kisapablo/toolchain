@@ -22,6 +22,10 @@ nmap <silent> псс gcc
 
 call plug#begin()
 
+Plug 'uga-rosa/translate.nvim'
+
+Plug 'LunarVim/bigfile.nvim'
+
 Plug 'f-person/auto-dark-mode.nvim'
 
 Plug 'nvim-lua/plenary.nvim'
@@ -52,7 +56,7 @@ Plug 'windwp/nvim-autopairs'
 
 Plug 'nvim-lua/plenary.nvim'
 
-Plug 'github/copilot.vim'
+" Plug 'github/copilot.vim'
 
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
 Plug 'rmagatti/auto-session'
@@ -123,6 +127,9 @@ Plug 'prabirshrestha/async.vim'
 
 
 Plug 'nvim-treesitter/nvim-treesitter-context' 
+Plug 'NickvanDyke/opencode.nvim'
+Plug 'nvim-lualine/lualine.nvim'
+Plug 'folke/snacks.nvim'
 
 call plug#end()
 
@@ -258,6 +265,51 @@ vim.keymap.set("n", "<C-M-[>", [[<cmd>vertical resize -5<cr>]]) -- make the wind
 vim.keymap.set("n", "<C-M-]>", [[<cmd>vertical resize +5<cr>]]) -- make the window smaller horizontally by pressing shift and -
 
 -- vim.keymap.set("n", "<TAB>", "<C-W><C-W>")
+
+-- Alternative navigation for when TAB is bound by OpenCode
+vim.keymap.set("n", "<C-Tab>", function()
+    if is_float_open() then
+        -- Focus the floating window
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local config = vim.api.nvim_win_get_config(win)
+            if config.relative ~= "" then
+                vim.api.nvim_set_current_win(win)
+                return
+            end
+        end
+    else
+        -- Check if current window is a terminal and switch to next window
+        local current_win = vim.api.nvim_get_current_win()
+        local current_buf = vim.api.nvim_win_get_buf(current_win)
+        local current_buftype = vim.api.nvim_buf_get_option(current_buf, "buftype")
+        
+        if current_buftype == "terminal" then
+            -- If in terminal, switch to next window
+            vim.cmd("wincmd w")
+        else
+            -- Check if there are any terminal windows open
+            local terminal_found = false
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local buf = vim.api.nvim_win_get_buf(win)
+                local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+                if buftype == "terminal" then
+                    terminal_found = true
+                    break
+                end
+            end
+            
+            if terminal_found then
+                -- If terminals exist, cycle through all windows including terminals
+                vim.cmd("wincmd w")
+            else
+                -- No terminals, just switch to next panel
+                vim.cmd("wincmd w")
+            end
+        end
+    end
+end, { noremap = true, silent = true })
+
+-- Original TAB mapping (may be overridden by OpenCode)
 vim.keymap.set("n", "<Tab>", function()
     if is_float_open() then
         -- Focus the floating window
@@ -269,8 +321,34 @@ vim.keymap.set("n", "<Tab>", function()
             end
         end
     else
-        -- Switch to next panel
-        vim.cmd("wincmd w")
+        -- Check if current window is a terminal and switch to next window
+        local current_win = vim.api.nvim_get_current_win()
+        local current_buf = vim.api.nvim_win_get_buf(current_win)
+        local current_buftype = vim.api.nvim_buf_get_option(current_buf, "buftype")
+        
+        if current_buftype == "terminal" then
+            -- If in terminal, switch to next window
+            vim.cmd("wincmd w")
+        else
+            -- Check if there are any terminal windows open
+            local terminal_found = false
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local buf = vim.api.nvim_win_get_buf(win)
+                local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+                if buftype == "terminal" then
+                    terminal_found = true
+                    break
+                end
+            end
+            
+            if terminal_found then
+                -- If terminals exist, cycle through all windows including terminals
+                vim.cmd("wincmd w")
+            else
+                -- No terminals, just switch to next panel
+                vim.cmd("wincmd w")
+            end
+        end
     end
 end, { noremap = true, silent = true })
 
@@ -581,33 +659,7 @@ vim.g.copilot_filetypes = {
     -- ["markdown"] = false,
 }
 
-local function disable_copilot_without_vpn(service_name)
-  -- Run systemctl to check service status
-  local handle = io.popen("systemctl is-active --quiet " .. service_name .. " && echo 'active' || echo 'inactive'")
-  if not handle then
-    return
-  end
-
-  local result = handle:read("*a")
-  handle:close()
-
-  -- Trim whitespace from result
-  result = result:gsub("%s+", "")
-
-  if result == "inactive" then
-    vim.notify(service_name .. " is not running, disabling Copilot for current buffer", vim.log.levels.INFO)
-    vim.cmd('Copilot disable')
-  end
-end
-
-vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    disable_copilot_without_vpn('wg-quick@wg0.service')
-  end,
-  desc = "Check systemd service status on Neovim startup",
-})
-
-vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
+vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,localoptions,terminal"
 vim.g.db_ui_execute_on_save = 0
 vim.g.db_ui_show_database_icon = 1
 vim.g.db_ui_use_nerd_fonts = 1
@@ -867,6 +919,77 @@ end
 -- Set the keybinding for 'cvr' in normal mode
 vim.keymap.set("n", "cvr", telescope_search_replace, { desc = "Search and replace across project" })
 
+require("bigfile").setup {
+  filesize = 1, -- size of the file in MiB, the plugin round file sizes to the closest MiB
+  pattern = { "*" }, -- autocmd pattern or function see <### Overriding the detection of big files>
+  features = { -- features to disable
+    "indent_blankline",
+    "illuminate",
+    "lsp",
+    "treesitter",
+    "syntax",
+    "matchparen",
+    "vimopts",
+    "filetype",
+  },
+}
+
+require('snacks').setup({
+picker = {}, terminal = {}, input = {},
+bigfile = {
+    size = 0.8 * 1024 * 1024,
+    line_length = 1000
+},
+image = {},
+})
+
+require('lualine').setup {
+  sections = {
+    lualine_a = { 'mode' },
+    lualine_b = { 'branch', 'diff', 'diagnostics' },
+    lualine_c = { { 'filename', path = 1 } },
+    lualine_x = { 'encoding', 'fileformat', 'filetype' },
+    lualine_y = { 'progress' },
+    lualine_z = { 'location' }
+
+  },
+
+  inactive_sections = {
+    lualine_a = {},
+    lualine_b = {},
+    lualine_c = { { 'filename', path = 1 }},
+    lualine_x = { 'location' },
+    lualine_y = {},
+    lualine_z = {}
+
+  },
+
+  tabline = {},
+
+  extensions = {}
+
+}
+   vim.g.opencode_opts = {
+      -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition" on the type or field.
+    }
+
+    -- Required for `opts.events.reload`.
+    vim.o.autoread = true
+
+    -- Recommended/example keymaps.
+    vim.keymap.set({ "n", "x" }, "<leader>a", function() require("opencode").ask("@this: ", { submit = true }) end, { desc = "Ask opencode…" })
+    vim.keymap.set({ "n", "x" }, "<leader>s", function() require("opencode").select() end,                          { desc = "Execute opencode action…" })
+    vim.keymap.set({"n", "t"}, "cva", function() require("opencode").toggle() end, { desc = "Toggle opencode" })
+
+    -- vim.keymap.set({ "n", "x" }, "go",  function() return require("opencode").operator("@this ") end,        { desc = "Add range to opencode", expr = true })
+    -- vim.keymap.set("n",          "goo", function() return require("opencode").operator("@this ") .. "_" end, { desc = "Add line to opencode", expr = true })
+    --
+    -- vim.keymap.set("n", "<S-C-u>", function() require("opencode").command("session.half.page.up") end,   { desc = "Scroll opencode up" })
+    -- vim.keymap.set("n", "<S-C-d>", function() require("opencode").command("session.half.page.down") end, { desc = "Scroll opencode down" })
+    --
+    -- -- You may want these if you stick with the opinionated "<C-a>" and "<C-x>" above — otherwise consider "<leader>o…".
+    -- vim.keymap.set("n", "+", "<C-a>", { desc = "Increment under cursor", noremap = true })
+    -- vim.keymap.set("n", "-", "<C-x>", { desc = "Decrement under cursor", noremap = true })
 EOF
 
 autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })
