@@ -11,6 +11,7 @@ highlight @function.macro guifg=#35adff
 highlight @function guifg=#56a8f5
 highlight @variable.member guifg=#de66dc
 highlight @variable.type guifg=#de66dc
+highlight @type guifg=#de66dc
 highlight @variable guifg=#d9b76e
 highlight @string guifg=#5ba130
 highlight @module guifg=#c4c1db

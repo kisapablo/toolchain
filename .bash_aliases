@@ -12,6 +12,7 @@ alias crr="cargo run --release"
 alias cm="cargo make"
 alias dc-up="docker-compose -d up &"
 alias dc-down="docker-compose -d down &"
+alias j="just"
 
 alias blender="/opt/blender/blender-latest/blender"
 alias ue="/opt/unreal-engine/unreal-engine-latest/Engine/Binaries/Linux/UnrealEditor"

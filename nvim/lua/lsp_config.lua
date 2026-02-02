@@ -3,7 +3,7 @@
 
 require 'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all"
-  ensure_installed = { "c", "cpp", "lua", "rust", "java", "toml" },
+  ensure_installed = { "c", "cpp", "lua", "rust", "java", "toml", "tact" },
 
   -- Install parsers synchronously (only applied to `ensure_installed`)
   sync_install = false,
@@ -48,23 +48,17 @@ vim.api.nvim_create_autocmd('FileType', {
   end
 })
 
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "go",
-  callback = function()
-    vim.keymap.set("n", "cvt", ":GoCoverage<CR>", { buffer = true })
-  end,
-})
-
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { "lua_ls", "omnisharp", "taplo", "vhdl_ls", "yamlls", "gopls", "html", "cssls", "golangci_lint_ls", "pyright", 'just' }
+  ensure_installed = { 'lua_ls', 'taplo', 'yamlls', 'html', 'pyright', 'ts_ls', 'codebook', 'just', 'asm_lsp', 'buf_ls', 'digestif', 'golangci_lint_ls' }
 }
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
-local servers = { 'clangd', 'pyright', 'ts_ls', 'jdtls', 'lua_ls', 'docker_compose_language_service',
-  'omnisharp', 'vhdl_ls', 'angularls', 'yamlls', 'taplo', 'buf_ls', 'digestif', 'gopls', 'intelephense', 'sqlls',
-  'html', 'cssls', 'golangci_lint_ls', 'codebook-lsp', 'just',
+local servers = { 'clangd', 'pyright', 'ts_ls', 'lua_ls',
+  'yamlls', 'digestif', 'taplo', 'buf_ls', 'sqlls', 'gopls', 'golangci_lint_ls',
+  'html', 'codebook-lsp', 'just',
+  'asm_lsp'
 }
 
 local is_first_delete = true
@@ -97,6 +91,79 @@ for _, lsp in ipairs(servers) do
     }
     vim.lsp.config(lsp, config)
     vim.lsp.enable({ lsp })
+  elseif lsp == 'ink-ls' then
+    local config = {
+      cmd = { 'ink-lsp-server' },
+      filetypes = { 'ink' },
+      root_markers = { '.git', 'package.json', 'ink.toml' },
+    }
+
+    vim.lsp.config(lsp, config)
+    vim.lsp.enable({ lsp })
+  elseif lsp == 'codebook-lsp' then
+    local config = {
+      cmd = { 'codebook-lsp', 'serve' },
+      filetypes = {
+        'c',
+        'css',
+        'gitcommit',
+        'go',
+        'haskell',
+        'html',
+        'java',
+        'javascript',
+        'javascriptreact',
+        'lua',
+        'markdown',
+        'php',
+        'python',
+        'ruby',
+        'rust',
+        'toml',
+        'text',
+        'typescript',
+        'typescriptreact',
+      },
+
+      root_markers = { '.git', 'codebook.toml', '.codebook.toml' },
+    }
+
+    vim.lsp.config(lsp, config)
+    vim.lsp.enable({ lsp })
+  elseif lsp == 'metals' then
+    local metals_config = require('metals').bare_config()
+    metals_config.on_attach = on_attach
+    metals_config.init_options.statusBarProvider = "on"
+    metals_config.settings = {
+      showImplicitArguments = true,
+      showInferredType = true,
+      superMethodLensesEnabled = true,
+      showImplicitConversionsAndClasses = true,
+      enableSemanticHighlighting = true,
+      inlayHints = true
+    }
+
+    vim.lsp.config(lsp, metals_config)
+    vim.lsp.enable({ lsp })
+  elseif lsp == 'tact' then
+    local util = require 'lspconfig.util'
+    vim.lsp.config(lsp, {
+      cmd = { 'tact-language-server', '--stdio' },
+      on_attach = on_attach,
+      filetypes = { 'tact' },
+      -- If you installed the language server via NPM, use the following command:
+      root_dir = util.root_pattern('package.json', '.git'),
+      docs = {
+        description = [[
+        Tact Language Server
+        https://github.com/tact-lang/tact-language-server
+      ]],
+        default_config = {
+          root_dir = [[root_pattern("package.json", ".git")]],
+        },
+      }
+    })
+    vim.lsp.enable({ lsp })
   elseif lsp == 'yamlls' then
     vim.lsp.config(lsp, {
       filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab', 'json' },
@@ -105,7 +172,7 @@ for _, lsp in ipairs(servers) do
           validate = true,
           schemas = {
             kubernetes = "*.yaml",
-            ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
+            ["http://json.schemastore.org/github-workflow.json"] = ".github/workflows/*",
             ["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
             ["http://json.schemastore.org/ansible-stable-2.9"] = "roles/tasks/*.{yml,yaml}",
             ["http://json.schemastore.org/prettierrc"] = ".prettierrc.{yml,yaml}",
@@ -116,6 +183,7 @@ for _, lsp in ipairs(servers) do
             ["https://json.schemastore.org/gitlab-ci"] = "*gitlab-ci*.{yml,yaml}",
             ["https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json"] =
             "*api*.{yml,yaml}",
+            ["https://json.schemastore.org/package.json"] = "package.json",
             ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] =
             "*docker-compose*.{yml,yaml}",
             ["https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json"] =
@@ -130,8 +198,7 @@ for _, lsp in ipairs(servers) do
     vim.lsp.enable({ lsp })
   elseif lsp == 'clangd' then
     vim.lsp.config(lsp, {
-      cmd = {
-        'clangd',
+      cmd = { 'clangd',
         '--clang-tidy',
         '--background-index',
       },
@@ -173,13 +240,12 @@ local opts         = {
           buildScripts = {
             enable = true,
           },
-          -- unsetTest = true,
-          -- target = "aarch64-linux-android",
+          -- target = "x86_64-pc-windows-msvc",
         },
         check = {
-          -- use all target true
-          allTargets = true,
-          -- target = "riscv32imac-unknown-none-elf"
+          -- features = "all",
+          -- allTargets = true,
+          --   target = "riscv32imac-unknown-none-elf"
         },
         workspace = {
           symbol = {
@@ -195,14 +261,15 @@ local opts         = {
         procMacro = {
           enable = true,
           ignored = {
-            tokio = { "select" },
-            o2o   = { "o2o" }
+            tokio       = { "select" },
+            o2o         = { "o2o" },
+            anchor_lang = { "program" },
           }
         },
 
         diagnostics = {
           experimental = {
-            enable = true
+            enable = false,
           },
 
           disabled = { "unresolved-proc-macro" },
@@ -262,34 +329,3 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
-
--- local null_ls = require("null-ls")
--- local group = vim.api.nvim_create_augroup("lsp_format_on_save", { clear = false })
--- local event = "BufWritePre" -- or "BufWritePost"
--- local async = event == "BufWritePost"
--- null_ls.setup({
---   on_attach = function(client, bufnr)
---     if client.supports_method("textDocument/formatting") then
---       vim.keymap.set("n", "<Leader>f", function()
---         vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
---       end, { buffer = bufnr, desc = "[lsp] format" })
---
---       -- format on save
---       vim.api.nvim_clear_autocmds({ buffer = bufnr, group = group })
---       vim.api.nvim_create_autocmd(event, {
---         buffer = bufnr,
---         group = group,
---         callback = function()
---           vim.lsp.buf.format({ bufnr = bufnr, async = async })
---         end,
---         desc = "[lsp] format on save",
---       })
---     end
---
---     if client.supports_method("textDocument/rangeFormatting") then
---       vim.keymap.set("x", "<Leader>f", function()
---         vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
---       end, { buffer = bufnr, desc = "[lsp] format" })
---     end
---   end,
--- })
