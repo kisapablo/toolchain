@@ -189,19 +189,6 @@ fallback = "dark"
 -- vim.opt.spell = true
 -- vim.opt.spelllang = {'en_us', 'en_gb', 'ru'}
 
--- local function show_documentation()
---     local filetype = vim.bo.filetype
---     if filetype == "vim" or filetype == "help" then
---         vim.cmd('rightbelow vertical h '..vim.fn.expand('<cword>'))
---     elseif filetype == "man" or filetype == "just" then
---         vim.cmd('rightbelow vertical Man '..vim.fn.expand('<cword>'))
---     elseif vim.fn.expand('%:t') == 'Cargo.toml' and require('crates').popup_available() then
---         require('crates').show_popup()
---     else
---         vim.lsp.buf.hover()
---     end
--- end
-
 local function show_documentation()
     local filetype = vim.bo.filetype
     local word = vim.fn.expand('<cword>')
@@ -287,9 +274,9 @@ local function is_documentation_float_open()
         if config.relative ~= "" then
             local buf = vim.api.nvim_win_get_buf(win)
             local buf_filetype = vim.api.nvim_buf_get_option(buf, "filetype")
-            
+
             -- Only return true for markdown documentation windows
-            if buf_filetype == "markdown" then
+            if buf_filetype == "markdown" or buf_filetype == "crates.nvim" then
                 return true, win
             end
         end

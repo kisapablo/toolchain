@@ -57,7 +57,7 @@ require('mason-lspconfig').setup {
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'lua_ls',
   'yamlls', 'digestif', 'taplo', 'buf_ls', 'sqlls',
-  'html', 'metals', 'codebook-lsp', 'just-lsp',
+  'html', 'metals', 'codebook-lsp', 'just',
   'asm_lsp'
 }
 
