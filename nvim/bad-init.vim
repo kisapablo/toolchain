@@ -89,7 +89,6 @@ Plug 'kevinhwang91/promise-async'
 Plug 'kevinhwang91/nvim-ufo'
 Plug 'tpope/vim-sleuth'
 
-Plug 'ray-x/go.nvim'
 Plug 'ray-x/guihua.lua'
 
 Plug 'f-person/git-blame.nvim'
@@ -128,7 +127,6 @@ call plug#end()
 set termguicolors
 highlight rustLifetime guifg=#20999d
 lua << EOF
-require('go').setup()
 
 local vim = vim
 
@@ -567,6 +565,13 @@ require('crates').setup {
     },
 }
 
+  local result = handle:read("*a")
+  handle:close()
+
+  -- Trim whitespace from result
+  result = result:gsub("%s+", "")
+end
+
 vim.o.sessionoptions="blank,buffers,curdir,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.g.db_ui_execute_on_save = 0
 vim.g.db_ui_show_database_icon = 1
@@ -742,7 +747,6 @@ if not configs.ls_emmet then
       cmd = { check_and_install_ls_emmet(), '--stdio' };
       filetypes = {
         'html',
-        'twig',
         'css',
         'scss',
         'javascriptreact',
@@ -759,19 +763,7 @@ if not configs.ls_emmet then
         'hbs',
         'handlebars',
       };
-     init_options = {
-  ["html"] = {
-    options = {
-      -- twig как html
-    },
-  },
-  ["twig"] = {
-    options = {
-      -- или здесь, если сервер поддерживает
-    },
-  },
-},
-root_dir = function(fname)
+      root_dir = function(fname)
         return vim.loop.cwd()
       end;
       settings = {};
