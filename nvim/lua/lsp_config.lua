@@ -246,7 +246,49 @@ for _, lsp in ipairs(servers) do
     })
     vim.lsp.enable({ lsp })
   end
+  if lsp == 'html' then
+    vim.lsp.config["html"] = vim.tbl_deep_extend("force", vim.lsp.config["html"] or {}, {
+      filetypes = vim.list_extend(
+        vim.lsp.config["html"].filetypes or { "html" }, { "twig" }
+      ),
+      init_options = {
+        provideFormatter = true,
+        embeddedLanguages = {
+          css = true, javascript = true,
+        },
+      },
+      settings = {
+        html = {
+          format = {
+            templating = true,       -- критично: не ломает {{ }} {% %} при форматировании
+            wrapLineLength = 120,
+            wrapAttributes = "auto", -- или "force" / "force-expand-multiline" если хочешь строже как в PhpStorm
+          },
+          hover = {
+            documentation = true, references = true,
+          },
+        },
+      },
+    })
+  end
+  vim.lsp.enable({ lsp })
+if lsp == 'twiggy_language_server' then
+  vim.lsp.config["twiggy_language_server"] = {
+  cmd = { "twiggy-language-server", "--stdio" },
+  filetypes = { "twig" },
+  root_markers = { "composer.json", ".git" },  -- Slim-проекты обычно имеют composer.json
+  settings = {
+    twiggy = {
+      framework = "standalone",   -- Slim ≠ Symfony → standalone!
+      -- diagnostics = { twigCsFixer = true },  -- если установлен twig-cs-fixer и хочешь диагностику
+      -- phpExecutable = vim.fn.exepath("php"),  -- если нужно явно
+    },
+  },
+}
 end
+  vim.lsp.enable({ lsp })
+end
+
 
 local opts         = {
   tools = {

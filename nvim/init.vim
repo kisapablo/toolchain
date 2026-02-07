@@ -56,8 +56,6 @@ Plug 'windwp/nvim-autopairs'
 
 Plug 'nvim-lua/plenary.nvim'
 
-Plug 'github/copilot.vim'
-
 " Plug 'olimorris/codecompanion.nvim', { 'tag': 'v16.3.0' }
 Plug 'rmagatti/auto-session'
 " After installing, add this to your init.vim:
@@ -126,7 +124,7 @@ Plug 'nvim-treesitter/nvim-treesitter-context'
 Plug 'NickvanDyke/opencode.nvim'
 Plug 'nvim-lualine/lualine.nvim'
 Plug 'folke/snacks.nvim'
-
+  
 call plug#end()
 
 set termguicolors
