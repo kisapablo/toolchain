@@ -51,14 +51,14 @@ vim.api.nvim_create_autocmd('FileType', {
 require('mason').setup()
 require('mason-lspconfig').setup {
   automatic_enable = false,
-  ensure_installed = { 'lua_ls', 'taplo', 'yamlls', 'html', 'pyright', 'ts_ls', 'codebook', 'just', 'asm_lsp', 'buf_ls', 'digestif', 'golangci_lint_ls' }
+  ensure_installed = { 'lua_ls', 'taplo', 'yamlls', 'html', 'pyright', 'ts_ls', 'codebook', 'just', 'asm_lsp', 'buf_ls', 'golangci_lint_ls', 'emmet_language_server' }
 }
 
 -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
 local servers = { 'clangd', 'pyright', 'ts_ls', 'lua_ls',
   'yamlls', 'digestif', 'taplo', 'buf_ls', 'sqlls', 'gopls', 'golangci_lint_ls',
   'html', 'codebook-lsp', 'just',
-  'asm_lsp'
+  'asm_lsp', 'emmet_language_server'
 }
 
 local is_first_delete = true
@@ -89,6 +89,39 @@ for _, lsp in ipairs(servers) do
         ["textDocument/implementation"] = require('omnisharp_extended').implementation_handler,
       },
     }
+    vim.lsp.config(lsp, config)
+    vim.lsp.enable({ lsp })
+  elseif lsp == 'emmet_language_server' then
+    local capabilities = vim.lsp.protocol.make_client_capabilities()
+    capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+    local config = {
+      filetypes = { "css", "eruby", "html", "javascript", "javascriptreact", "less", "sass", "scss", "pug", "typescriptreact", "twig", "sailfish" },
+      -- Read more about this options in the [vscode docs](https://code.visualstudio.com/docs/editor/emmet#_emmet-configuration).
+      -- **Note:** only the options listed in the table are supported.
+      init_options = {
+        ---@type table<string, string>
+        includeLanguages = {},
+        --- @type string[]
+        excludeLanguages = {},
+        --- @type string[]
+        extensionsPath = {},
+        --- @type table<string, any> [Emmet Docs](https://docs.emmet.io/customization/preferences/)
+        preferences = {},
+        --- @type boolean Defaults to `true`
+        showAbbreviationSuggestions = true,
+        --- @type "always" | "never" Defaults to `"always"`
+        showExpandedAbbreviation = "always",
+        --- @type boolean Defaults to `false`
+        showSuggestionsAsSnippets = false,
+        --- @type table<string, any> [Emmet Docs](https://docs.emmet.io/customization/syntax-profiles/)
+        syntaxProfiles = {},
+        --- @type table<string, string> [Emmet Docs](https://docs.emmet.io/customization/snippets/#variables)
+        variables = {},
+      },
+      capabilities = capabilities,
+    }
+
     vim.lsp.config(lsp, config)
     vim.lsp.enable({ lsp })
   elseif lsp == 'ink-ls' then
@@ -245,7 +278,8 @@ local opts         = {
         check = {
           -- features = "all",
           -- allTargets = true,
-          --   target = "riscv32imac-unknown-none-elf"
+          target = "riscv32imac-unknown-none-elf"
+          -- target = "xtensa-esp32-none-elf"
         },
         workspace = {
           symbol = {
