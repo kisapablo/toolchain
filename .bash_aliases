@@ -1,3 +1,4 @@
+alias vi=nvim
 alias sl=ls
 alias ns=nautilus
 
@@ -11,6 +12,7 @@ alias crr="cargo run --release"
 alias cm="cargo make"
 alias dc-up="docker-compose -d up &"
 alias dc-down="docker-compose -d down &"
+alias j="just"
 
 alias blender="/opt/blender/blender-latest/blender"
 alias ue="/opt/unreal-engine/unreal-engine-latest/Engine/Binaries/Linux/UnrealEditor"
@@ -46,6 +48,7 @@ alias rnm="sudo systemctl restart NetworkManager"
 alias console="tokio-console"
 #alias cat="bat"
 alias py="python"
+alias gr="go run ."
 
 export EDITOR="nvim"
 function parse_git_branch() {

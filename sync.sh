@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+mkdir -p $HOME/.config/nvim
+mkdir -p $HOME/.config/kitty
+mkdir -p $HOME/.config/tmux
+
 cp -R $HOME/.config/nvim/ ./
 cp -R $HOME/.config/kitty/ ./
 cp -R $HOME/.config/tmux/ ./
